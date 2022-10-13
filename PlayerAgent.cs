@@ -1,9 +1,13 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using Unity.MLAgents.Actuators;
+using Random = UnityEngine.Random;
+
+
 
 public class PlayerAgent : Agent
 {
@@ -33,6 +37,18 @@ public class PlayerAgent : Agent
 
     private float nextStepTimeout;
 
+    public static int GRID_MAX_SIZE = 100;
+
+    public static double score(double distance)
+    {
+        return normal_distribution(distance / GRID_MAX_SIZE, 0, 0.2);
+    }
+
+    public static double normal_distribution(double x, double mi, double sigma)
+    {
+        return 1.0 / (sigma * Math.Sqrt(2 * Math.PI)) * Math.Pow(Math.E, -Math.Pow(x - mi, 2) / (2 * sigma * sigma));
+    }
+
     #endregion
 
     #region Private Instance Variables
@@ -46,6 +62,11 @@ public class PlayerAgent : Agent
     private float distanceAtStart;
 
     #endregion
+
+    public static void Main()
+    {
+
+    }
 
     public override void Initialize()
     {
@@ -62,6 +83,7 @@ public class PlayerAgent : Agent
         transform.localPosition = orginalPosition;
         transform.localPosition = new Vector3(orginalPosition.x, orginalPosition.y, Random.Range(22,24));
         nextStepTimeout = StepCount + stepTimeout;
+        distanceAtStart = Vector3.Distance(transform.localPosition, target.transform.localPosition);
 
     }
 
@@ -78,8 +100,6 @@ public class PlayerAgent : Agent
 
         // 1 obserwacja
         sensor.AddObservation(Vector3.Distance(transform.localPosition, target.transform.localPosition));
-
-
     }
 
     public override void OnActionReceived(ActionBuffers actions)
@@ -87,29 +107,36 @@ public class PlayerAgent : Agent
         var vectorForce = new Vector3();
         vectorForce.x = actions.ContinuousActions[0];
         vectorForce.z = actions.ContinuousActions[1];
-        
-
+       
         playerRigidbody.AddForce(vectorForce * speed);
 
         var distanceFromTarget = Vector3.Distance(transform.localPosition, target.transform.localPosition);
-
+        var x = distanceFromTarget; // nie wiem jak tu dac zmienna do tego
+        var mi = 0;
+        var sigma = 0.2;
+                            // nie wiem gdzie te funkcje wywolac
+        score(distanceFromTarget); // nie wiem co tu wsadzic jako parametr
+        normal_distribution(x, mi, sigma);
+        Debug.Log("Score: ");
+        Debug.Log(score(distanceFromTarget));
 
         // Nagradzanie agenta
-
-        AddReward(-1f / MaxStep);
 
         if (distanceFromTarget <= distanceRequired)
         {
             SetReward(1.0f);
             StartCoroutine(SwapGroundMaterial(successMaterial, 0.5f));
+         
             EndEpisode();
             
         }
         // Karanie agenta
+        AddReward(-1f / MaxStep);
         if (transform.localPosition.y < -0.5)
         {
             SetReward(-1.0f);
             StartCoroutine(SwapGroundMaterial(failureMaterial, 0.5f));
+
             EndEpisode();
        
         }
