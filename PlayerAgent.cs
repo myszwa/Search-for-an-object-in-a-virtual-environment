@@ -1,9 +1,14 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using Unity.MLAgents.Actuators;
+using Random = UnityEngine.Random;
+
+
+
 
 public class PlayerAgent : Agent
 {
@@ -33,6 +38,20 @@ public class PlayerAgent : Agent
 
     private float nextStepTimeout;
 
+    public int MaxStep = 30000;
+
+    public static int GRID_MAX_SIZE = 50;
+
+    public static double score(double distance)
+    {
+        return normal_distribution(distance / GRID_MAX_SIZE, 0, 0.2);
+    }
+
+    public static double normal_distribution(double x, double mi, double sigma)
+    {
+        return 1.0 / (sigma * Math.Sqrt(2 * Math.PI)) * Math.Pow(Math.E, -Math.Pow(x - mi, 2) / (2 * sigma * sigma));
+    }
+
     #endregion
 
     #region Private Instance Variables
@@ -47,12 +66,16 @@ public class PlayerAgent : Agent
 
     #endregion
 
+    public static void Main()
+    {
+
+    }
+
     public override void Initialize()
     {
         playerRigidbody = GetComponent<Rigidbody>();
         orginalPosition = transform.localPosition;
         orginalTargetPosition = target.transform.localPosition;
-        MaxStep = 50000;
     }
 
     public override void OnEpisodeBegin()
@@ -60,8 +83,9 @@ public class PlayerAgent : Agent
         transform.LookAt(target.transform);
         target.transform.localPosition = orginalTargetPosition;
         transform.localPosition = orginalPosition;
-        transform.localPosition = new Vector3(orginalPosition.x, orginalPosition.y, Random.Range(22,24));
+        transform.localPosition = new Vector3(orginalPosition.x, orginalPosition.y, Random.Range(22, 24));
         nextStepTimeout = StepCount + stepTimeout;
+        distanceAtStart = Vector3.Distance(transform.localPosition, target.transform.localPosition);
 
     }
 
@@ -78,8 +102,6 @@ public class PlayerAgent : Agent
 
         // 1 obserwacja
         sensor.AddObservation(Vector3.Distance(transform.localPosition, target.transform.localPosition));
-
-
     }
 
     public override void OnActionReceived(ActionBuffers actions)
@@ -87,33 +109,55 @@ public class PlayerAgent : Agent
         var vectorForce = new Vector3();
         vectorForce.x = actions.ContinuousActions[0];
         vectorForce.z = actions.ContinuousActions[1];
-        
 
         playerRigidbody.AddForce(vectorForce * speed);
 
         var distanceFromTarget = Vector3.Distance(transform.localPosition, target.transform.localPosition);
 
+        var mi = 0;
+var sigma = 0.2;
+        float x = distanceFromTarget;
+        float y = distanceAtStart;
+       // Debug.Log("distanceFromTarget " + distanceFromTarget);
+       // Debug.Log("x  " + x);
+        normal_distribution(y, mi, sigma);
+
+
+        float atam = (float)score(x);
+       // Debug.Log("atam " + atam);
+        //var reward = Math.Max(-1.0 / MaxStep, atam);
+        float reward1 = Math.Max(-1.0f / MaxStep, atam);
+        //Debug.Log("reward " + reward);
+       // Debug.Log("reward " + reward1);
+        // Debug.Log("Continous [0] " + actions.ContinuousActions[0]);
+        // Debug.Log("Continous [1] " + actions.ContinuousActions[1]);
+        // Debug.Log(score(distanceFromTarget));
 
         // Nagradzanie agenta
-
-        AddReward(-1f / MaxStep);
+        AddReward(0.00001f / reward1);
 
         if (distanceFromTarget <= distanceRequired)
         {
             SetReward(1.0f);
             StartCoroutine(SwapGroundMaterial(successMaterial, 0.5f));
+
             EndEpisode();
-            
+
+            return;
         }
         // Karanie agenta
+
+       // AddReward(-1f / MaxStep);
         if (transform.localPosition.y < -0.5)
         {
             SetReward(-1.0f);
             StartCoroutine(SwapGroundMaterial(failureMaterial, 0.5f));
+
             EndEpisode();
-       
+
         }
     }
+
 
     public override void Heuristic(in ActionBuffers actionsOut)
     {
