@@ -40,7 +40,7 @@ public class PlayerAgent : Agent
 
     public int MaxStep = 30000;
 
-    public static int GRID_MAX_SIZE = 100;
+    public static int GRID_MAX_SIZE = 50;
 
     public static double score(double distance)
     {
@@ -83,7 +83,7 @@ public class PlayerAgent : Agent
         transform.LookAt(target.transform);
         target.transform.localPosition = orginalTargetPosition;
         transform.localPosition = orginalPosition;
-        transform.localPosition = new Vector3(orginalPosition.x, orginalPosition.y, Random.Range(22,24));
+        transform.localPosition = new Vector3(orginalPosition.x, orginalPosition.y, Random.Range(22, 24));
         nextStepTimeout = StepCount + stepTimeout;
         distanceAtStart = Vector3.Distance(transform.localPosition, target.transform.localPosition);
 
@@ -109,19 +109,20 @@ public class PlayerAgent : Agent
         var vectorForce = new Vector3();
         vectorForce.x = actions.ContinuousActions[0];
         vectorForce.z = actions.ContinuousActions[1];
-       
+
         playerRigidbody.AddForce(vectorForce * speed);
 
         var distanceFromTarget = Vector3.Distance(transform.localPosition, target.transform.localPosition);
-        
+
         var mi = 0;
         var sigma = 0.2;
-       float x = distanceFromTarget;
+        float x = distanceFromTarget;
+        float y = distanceAtStart;
         Debug.Log("distanceFromTarget " + distanceFromTarget);
         Debug.Log("x  " + x);
-        normal_distribution(x, mi, sigma);
+        normal_distribution(y, mi, sigma);
 
-      
+
         float atam = (float)score(x);
         Debug.Log("atam " + atam);
         var reward = Math.Max(-1.0 / MaxStep, atam);
@@ -133,26 +134,27 @@ public class PlayerAgent : Agent
         // Debug.Log(score(distanceFromTarget));
 
         // Nagradzanie agenta
+        AddReward(0.00001f / reward1);
 
         if (distanceFromTarget <= distanceRequired)
         {
             SetReward(1.0f);
             StartCoroutine(SwapGroundMaterial(successMaterial, 0.5f));
-         
+
             EndEpisode();
 
-            return ;
+            return;
         }
         // Karanie agenta
- 
-         AddReward(-1f / reward1);
+
+       // AddReward(-1f / MaxStep);
         if (transform.localPosition.y < -0.5)
         {
             SetReward(-1.0f);
             StartCoroutine(SwapGroundMaterial(failureMaterial, 0.5f));
 
             EndEpisode();
-       
+
         }
     }
 
