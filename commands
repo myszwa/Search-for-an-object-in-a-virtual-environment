@@ -1,1 +1,2 @@
 venv\Scripts\activate
+mlagents-learn config/et/FindTheTarget.yaml --run-id=ResearchDR34
