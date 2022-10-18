@@ -19,3 +19,7 @@ https://user-images.githubusercontent.com/58239029/196531013-76a93ec0-bb50-4d64-
 # RUN 41 vs 44 POLICY LOSS
 
 ![Losses_Policy Loss (1)](https://user-images.githubusercontent.com/58239029/196533413-cf1f6ad6-0634-4002-9f74-fe2e35ab4bff.svg)
+
+# POSSITIVE RUN 44 IN CONSOLE
+
+![image](https://user-images.githubusercontent.com/58239029/196539109-d8b38bb6-d07c-4344-8989-7458645306c0.png)
